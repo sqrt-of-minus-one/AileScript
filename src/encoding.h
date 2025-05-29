@@ -7,8 +7,8 @@ namespace enc
 {
 
 // A few constants for different UTF encodings
-constexpr char32_t U8_1_LIMIT = 0x7FF;
-constexpr char32_t U8_2_LIMIT = 0x7FFF;
+constexpr char32_t U8_1_LIMIT = 0x7F;
+constexpr char32_t U8_2_LIMIT = 0x7FF;
 constexpr char32_t U8_3_LIMIT = 0xFFFF;
 constexpr char32_t U8_4_LIMIT = 0x10FFFF;
 constexpr char8_t U8_1_1_BASE = 0b0000'0000;

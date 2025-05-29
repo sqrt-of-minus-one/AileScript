@@ -149,6 +149,81 @@ void Parser::next(char16_t c)
 	}
 }
 
+Parser& Parser::operator<<(char16_t c)
+{
+	next(c);
+	return *this;
+}
+
+Parser& Parser::operator<<(const char16_t* str)
+{
+	for (int i = 0; str[i] != u'\0'; ++i)
+	{
+		next(str[i]);
+	}
+	return *this;
+}
+
+Parser& Parser::operator<<(const std::u16string& str)
+{
+	for (char16_t c : str)
+	{
+		next(c);
+	}
+	return *this;
+}
+
+Parser::EInputStatus Parser::get_input_status() const
+{
+	if (waiting_escape_ != EWaitingEscape::NONE)
+	{
+		return EInputStatus::ESCAPE;
+	}
+
+/*	switch (waiting_status_)
+	{
+	case EWaitingStatus::NONE:
+	case EWaitingStatus::WORD:
+	case EWaitingStatus::PUNCTUATOR:
+	case EWaitingStatus::DOT:
+	case EWaitingStatus::INT_LITERAL:
+	case EWaitingStatus::ZERO_INT_LITERAL:
+	case EWaitingStatus::HEX_INT_LITERAL:
+	case EWaitingStatus::OCT_INT_LITERAL:
+	case EWaitingStatus::ZERO_OCT_INT_LITERAL:
+	case EWaitingStatus::BIN_INT_LITERAL:
+	case EWaitingStatus::INT_LITERAL_SUFFIX:
+	case EWaitingStatus::FLOAT_LITERAL:
+	case EWaitingStatus::FLOAT_LITERAL_EXP_SIGN:
+	case EWaitingStatus::FLOAT_LITERAL_EXP:
+	case EWaitingStatus::FLOAT_LITERAL_SUFFIX:
+	case EWaitingStatus::CHAR_LITERAL:
+	case EWaitingStatus::CHAR_LITERAL_SUFFIX:
+	case EWaitingStatus::STRING_LITERAL:
+	case EWaitingStatus::STRING_LITERAL_SUFFIX:
+	case EWaitingStatus::SINGLE_LINE_COMMENT:
+	case EWaitingStatus::SINGLE_LINE_COMMENT_BACKSLASH:
+	case EWaitingStatus::MULTI_LINE_COMMENT:
+	case EWaitingStatus::MULTI_LINE_COMMENT_ENDING:
+	}
+*/
+	switch (waiting_status_)
+	{
+	case EWaitingStatus::CHAR_LITERAL:
+		return EInputStatus::CHAR;
+	case EWaitingStatus::STRING_LITERAL:
+		return EInputStatus::STRING;
+	case EWaitingStatus::SINGLE_LINE_COMMENT:
+	case EWaitingStatus::SINGLE_LINE_COMMENT_BACKSLASH:
+		return EInputStatus::SINGLE_LINE_COMMENT;
+	case EWaitingStatus::MULTI_LINE_COMMENT:
+	case EWaitingStatus::MULTI_LINE_COMMENT_ENDING:
+		return EInputStatus::MULTI_LINE_COMMENT;
+	default:
+		return EInputStatus::READY;
+	}
+}
+
 TokenList Parser::extract_tokens()
 {
 	return std::move(tokens_);
@@ -188,6 +263,11 @@ void Parser::next_escape_char_(char16_t c)
 		escape_code_ *= 0x10;
 		escape_code_ += c - u'a' + 10;
 	}
+	else if ((is_space(c) || c == u'\'') && waiting_escape_ == EWaitingEscape::U_BRACKETS) // A {}-sequence allows space characters and ' separators inside
+	{
+		// Ignore a space or an apostrophe
+		return;
+	}
 	else if (c == u'}' && waiting_escape_ == EWaitingEscape::U_BRACKETS) // A closing bracket is only possible in a {}-sequence
 	{
 		apply_escape_(); // The end of the sequence
@@ -200,6 +280,8 @@ void Parser::next_escape_char_(char16_t c)
 		token->invalid_type = InvalidToken::EInvalidType::ESCAPE;
 		tokens_.push_back(token);
 		waiting_escape_ = EWaitingEscape::NONE; // The sequence has ended
+		escape_code_ = 0;
+		escape_chars_counter_ = 0;
 		next(c); // Put the character as usual
 		return;
 	}
@@ -238,6 +320,8 @@ void Parser::apply_escape_()
 		}
 	}
 	waiting_escape_ = EWaitingEscape::NONE;
+	escape_code_ = 0;
+	escape_chars_counter_ = 0;
 }
 
 // No incomplete tokens: create a new one

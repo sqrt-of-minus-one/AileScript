@@ -66,7 +66,7 @@ std::u32string enc::to_32<std::u16string>(const std::u16string& str)
 	std::u32string str32;
 	for (int i = 0; i < str.length(); ++i)
 	{
-		if ((str[i] & ~U16_1_1_MASK) == U16_1_1_BASE) // A single-word character
+		if (str[i] <= U16_1_LIMIT) // A single-word character
 		{
 			char32_t c = str[i];
 			str32.push_back(c);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Token.h"
+#include "../Token.h"
 
 #include <list>
 #include <stack>
@@ -61,8 +61,23 @@ private:
 	TokenList tokens_; // Parsed tokens
 
 public:
+	enum class EInputStatus
+	{
+		READY, // No incomplete tokens
+		STRING, // A " is being expected to close a string literal
+		CHAR, // A ' is being expected to close a character literal
+		SINGLE_LINE_COMMENT, // A new line is being expected to end a comment
+		MULTI_LINE_COMMENT, // A */ is being expected to end a comment
+		ESCAPE // An escape sequence is not complete
+	};
+
 	void next(char16_t c); // Put a next character
+	EInputStatus get_input_status() const;
 	TokenList extract_tokens();
+
+	Parser& operator<<(char16_t c);
+	Parser& operator<<(const char16_t* str);
+	Parser& operator<<(const std::u16string& str);
 
 private:
 	void next_escape_char_(char16_t c); // Next hexadecimal digit of an escape sequence

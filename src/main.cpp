@@ -4,7 +4,7 @@
  //  File: main.cpp                    //
 ////////////////////////////////////////
 
-#include "Parser.h"
+#include "Parser/Parser.h"
 #include "encoding.h"
 
 #include <iostream>
@@ -12,12 +12,7 @@
 
 void new_line(const std::string& line, Parser& parser)
 {
-	std::u16string str16 = enc::to_16(line); // Convert to UTF-16
-	for (char16_t c : str16)
-	{
-		parser.next(c);
-	}
-	parser.next(u'\n');
+	parser << enc::to_16(line) << u'\n';
 	TokenList tokens = parser.extract_tokens(); // Get parsed tokens
 	for (Token::Ptr token : tokens) // I haven't read an interpreter yet, for now just print every token
 	{
@@ -34,7 +29,24 @@ int main(int argc, char* argv[])
 		std::string buff;
 		while (true)
 		{
-			std::cout << " > ";
+			switch (parser.get_input_status())
+			{
+			case Parser::EInputStatus::READY:
+				std::cout << "   > ";
+				break;
+			case Parser::EInputStatus::CHAR:
+				std::cout << "'  > ";
+				break;
+			case Parser::EInputStatus::STRING:
+				std::cout << "\"  > ";
+				break;
+			case Parser::EInputStatus::SINGLE_LINE_COMMENT:
+				std::cout << "// > ";
+				break;
+			case Parser::EInputStatus::MULTI_LINE_COMMENT:
+				std::cout << "/* > ";
+				break;
+			}
 			std::getline(std::cin, buff); // Read a line
 			new_line(buff, parser);
 		}
