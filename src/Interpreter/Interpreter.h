@@ -33,4 +33,7 @@ public:
 	Interpreter& operator<<(Token::Ptr token);
 	Interpreter& operator<<(const TokenList& tokens);
 	Interpreter& operator<<(Parser& parser);
+
+private:
+	void create_group_(GroupToken::EGroupType group_type, PunctuatorToken::EPunctuator required_left_punctuator);
 };

@@ -12,7 +12,8 @@ struct Token
 
 	enum class EType
 	{
-		INVALID,
+		INVALID = 0,
+		GROUP,
 		ID, KEYWORD, PUNCTUATOR,
 		INT_LITERAL, FLOAT_LITERAL, CHAR_LITERAL, STRING_LITERAL
 	};
@@ -37,6 +38,28 @@ struct InvalidToken : public Token
 	}
 
 	EInvalidType invalid_type = EInvalidType::UNKNOWN;
+
+	virtual void print() const override;
+};
+
+// Group of tokens surrounded by pair characters
+struct GroupToken : public Token
+{
+	// Characters surrounding the group
+	enum class EGroupType
+	{
+		PARENTHESIS,	// ()
+		SQUARE_BRACKET,	// []
+		BRACKET			// {}
+	};
+
+	virtual EType get_type() const override
+	{
+		return EType::GROUP;
+	}
+
+	EGroupType group_type;
+	TokenList tokens; // The list of tokens in the group
 
 	virtual void print() const override;
 };

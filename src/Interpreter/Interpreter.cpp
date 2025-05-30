@@ -28,20 +28,18 @@ void Interpreter::next(Token::Ptr token)
 			break;
 		}
 		case PunctuatorToken::EPunctuator::PAR_RIGHT:
+		{
+			create_group_(GroupToken::EGroupType::PARENTHESIS, PunctuatorToken::EPunctuator::PAR_LEFT);
+			break;
+		}
 		case PunctuatorToken::EPunctuator::SQ_BRACKET_RIGHT:
+		{
+			create_group_(GroupToken::EGroupType::SQUARE_BRACKET, PunctuatorToken::EPunctuator::SQ_BRACKET_LEFT);
+			break;
+		}
 		case PunctuatorToken::EPunctuator::BRACKET_RIGHT:
 		{
-			if (!to_be_closed_.empty())
-			{
-				std::shared_ptr<PunctuatorToken> left = std::dynamic_pointer_cast<PunctuatorToken>(*to_be_closed_.top());
-				if (left && (
-					punctuator->punctuator == PunctuatorToken::EPunctuator::PAR_RIGHT && left->punctuator == PunctuatorToken::EPunctuator::PAR_LEFT ||
-					punctuator->punctuator == PunctuatorToken::EPunctuator::SQ_BRACKET_RIGHT && left->punctuator == PunctuatorToken::EPunctuator::SQ_BRACKET_LEFT ||
-					punctuator->punctuator == PunctuatorToken::EPunctuator::BRACKET_RIGHT && left->punctuator == PunctuatorToken::EPunctuator::BRACKET_LEFT))
-				{
-					to_be_closed_.pop();
-				}
-			}
+			create_group_(GroupToken::EGroupType::BRACKET, PunctuatorToken::EPunctuator::BRACKET_LEFT);
 			break;
 		}
 		}
@@ -95,4 +93,22 @@ Interpreter& Interpreter::operator<<(Parser& parser)
 {
 	extract_from_parser(parser);
 	return *this;
+}
+
+void Interpreter::create_group_(GroupToken::EGroupType group_type, PunctuatorToken::EPunctuator required_left_punctuator)
+{
+	if (!to_be_closed_.empty())
+	{
+		TokenList::const_iterator left_it = to_be_closed_.top();
+		std::shared_ptr<PunctuatorToken> left = std::dynamic_pointer_cast<PunctuatorToken>(*left_it);
+		if (left && left->punctuator == required_left_punctuator)
+		{
+			std::shared_ptr<GroupToken> group = std::make_shared<GroupToken>();
+			group->group_type = group_type;
+			group->tokens.insert(group->tokens.end(), std::next(left_it), std::prev(tokens_.cend()));
+			tokens_.erase(left_it, tokens_.end());
+			tokens_.push_back(group);
+			to_be_closed_.pop();
+		}
+	}
 }

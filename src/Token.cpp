@@ -16,6 +16,42 @@ void InvalidToken::print() const
 	}
 }
 
+void GroupToken::print() const
+{
+	std::cout << std::left << std::setw(20) << "Group: ";
+	switch (group_type)
+	{
+	case EGroupType::PARENTHESIS:
+		std::cout << '(' << std::endl;
+		break;
+	case EGroupType::SQUARE_BRACKET:
+		std::cout << '[' << std::endl;
+		break;
+	case EGroupType::BRACKET:
+		std::cout << '{' << std::endl;
+		break;
+	}
+
+	for (Ptr token : tokens)
+	{
+		token->print();
+	}
+
+	std::cout << std::left << std::setw(20) << "Group: ";
+	switch (group_type)
+	{
+	case EGroupType::PARENTHESIS:
+		std::cout << ')' << std::endl;
+		break;
+	case EGroupType::SQUARE_BRACKET:
+		std::cout << ']' << std::endl;
+		break;
+	case EGroupType::BRACKET:
+		std::cout << '}' << std::endl;
+		break;
+	}
+}
+
 void IdToken::print() const
 {
 	std::cout << std::left << std::setw(20) << "Identifier: " << name << std::endl;
