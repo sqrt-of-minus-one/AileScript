@@ -5,24 +5,22 @@
 ////////////////////////////////////////
 
 #include "Parser/Parser.h"
+#include "Interpreter/Interpreter.h"
 #include "encoding.h"
 
 #include <iostream>
 #include <fstream>
 
-void new_line(const std::string& line, Parser& parser)
+void new_line(const std::string& line, Parser& parser, Interpreter& interpreter)
 {
 	parser << enc::to_16(line) << u'\n';
-	TokenList tokens = parser.extract_tokens(); // Get parsed tokens
-	for (Token::Ptr token : tokens) // I haven't read an interpreter yet, for now just print every token
-	{
-		token->print();
-	}
+	interpreter << parser;
 }
 
 int main(int argc, char* argv[])
 {
 	Parser parser;
+	Interpreter interpreter;
 
 	if (argc == 1) // Live from console
 	{
@@ -32,7 +30,21 @@ int main(int argc, char* argv[])
 			switch (parser.get_input_status())
 			{
 			case Parser::EInputStatus::READY:
-				std::cout << "   > ";
+				switch (interpreter.get_input_status())
+				{
+				case Interpreter::EInputStatus::READY:
+					std::cout << "   > ";
+					break;
+				case Interpreter::EInputStatus::PARENTHESIS:
+					std::cout << "(  > ";
+					break;
+				case Interpreter::EInputStatus::SQUARE_BRACKET:
+					std::cout << "[  > ";
+					break;
+				case Interpreter::EInputStatus::BRACKET:
+					std::cout << "{  > ";
+					break;
+				}
 				break;
 			case Parser::EInputStatus::CHAR:
 				std::cout << "'  > ";
@@ -48,7 +60,7 @@ int main(int argc, char* argv[])
 				break;
 			}
 			std::getline(std::cin, buff); // Read a line
-			new_line(buff, parser);
+			new_line(buff, parser, interpreter);
 		}
 	}
 	else // From the file
@@ -61,7 +73,7 @@ int main(int argc, char* argv[])
 			{
 				while (std::getline(file, buff))
 				{
-					new_line(buff, parser);
+					new_line(buff, parser, interpreter);
 				}
 			}
 			else
